@@ -1,17 +1,25 @@
-const request = require('request');
-const { weather_key, mapbox_key } = require('./config');
+const geoCode = require('./utils/geocode');
+const forecast = require('./utils/weatherapi');
 
-const weatherURL = `http://api.weatherstack.com/current?access_key=${weather_key}&query=Dallas%Tx&units=f`;
-const geoURL = `https://api.mapbox.com/geocoding/v5/mapbox.places/Los%20Angeles.json?access_token=${mapbox_key}&limit=1`
+// Weather app using command line argument
 
-// weatherstack API
-// request({url: weatherURL, json: true}, (err, res) => {
-//     let temp = res.body.current;
-//     console.log(`It is currently ${temp.temperature} degrees farenheit.  It feels like ${temp.feelslike} degrees farenheit.`)
-// })
+const locale = process.argv.slice(2)[0];
 
-//Geocoding service
-request({url: geoURL, json: true}, (err, res) => {
-    let geo = res.body.features[0];
-    console.log(`${geo.place_name} LAT: ${geo.center[1]} LONG: ${geo.center[0]}`)
-})
+if(!locale) {
+    return console.log('Please enter a location');
+} else {
+    geoCode(locale, (err, {latitude, longitude, location}) => {
+        if(err) {
+            return console.log('Geocode error: ', err);             //error handling
+        } 
+    
+        forecast(latitude, longitude, (error, weatherData) => {
+            if(error) {
+                return console.log('Forecase error: ', error);         //error handling
+            }
+            
+            console.log('Location: ', location);
+            console.log('Forecast: ', weatherData);
+        })
+    })
+}
